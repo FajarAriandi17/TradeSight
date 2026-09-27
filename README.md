@@ -8,14 +8,15 @@ Aplikasi desktop **Windows (.exe)** & **macOS (.dmg)** yang menampilkan chart re
 
 ---
 
-## ⚙️ Aktifkan CI (sekali saja)
+## ⚙️ CI/CD (aktif)
 
-File workflow disimpan di [`ci/build-release.yml`](ci/build-release.yml) karena integrasi GitHub App yang dipakai
-untuk push tidak punya izin `workflows`. Aktifkan dengan salah satu cara:
+Workflow build ada di [`.github/workflows/build-release.yml`](.github/workflows/build-release.yml) dan berjalan otomatis:
 
-- **Web GitHub:** buka `ci/build-release.yml` → salin isinya → **Add file → Create new file** → nama
-  `.github/workflows/build-release.yml` → paste → **Commit**.
-- **Lokal:** `mkdir -p .github/workflows && git mv ci/build-release.yml .github/workflows/ && git commit -m "ci: enable" && git push`
+- **Push ke `main` / Pull Request** → jalankan tes engine + build installer (hasil di tab **Actions → Artifacts**).
+- **Push tag `v*`** (mis. `git tag v0.1.0 && git push --tags`) → build + buat **GitHub Release** otomatis berisi `.exe` & `.dmg`.
+- **Manual** → tab **Actions → Build Release → Run workflow**.
+
+Pipeline: `test-sidecar` (pytest, Python 3.12) → `build` matrix (Windows `x86_64-pc-windows-msvc` → NSIS `.exe` EN/ID; macOS `aarch64-apple-darwin` → `.dmg`). Setiap OS mem-build sidecar Python (PyInstaller) lebih dulu lalu `tauri build`.
 
 ## ⬇️ Download installer
 
@@ -100,7 +101,7 @@ apps/desktop/            Tauri + React (frontend)
   src-tauri/             Rust, tauri.conf.json (bundler nsis/dmg), icons
 services/sidecar/        FastAPI + analysis engine (+ tests)
 scripts/build_sidecar.py PyInstaller → src-tauri/binaries/tradesight-sidecar-<triple>
-ci/build-release.yml     workflow CI (pindahkan ke .github/workflows/)
+.github/workflows/       build-release.yml — CI build .exe/.dmg (aktif)
 ```
 
 ## 🔌 API sidecar (localhost:8765)
