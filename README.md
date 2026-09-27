@@ -52,11 +52,22 @@ Installer dibuat otomatis oleh GitHub Actions (tidak perlu komputer Windows/Mac 
 
 **Instrumen MVP:** EURUSD, GBPUSD, USDJPY, AUDUSD, XAUUSD + BBCA, BBRI, BMRI, BBNI, TLKM, ASII, UNVR, ICBP, ADRO, GOTO.
 
-## ⏳ Belum diimplementasikan (Fase 2–3)
+## 🚀 Fitur Fase 2 (baru — Premium, offline)
+
+| Fitur | Status | Keterangan |
+|---|---|---|
+| Market Screener | ✅ | Pindai semua instrumen sekaligus; filter timeframe/arah/kelas aset/min RR/min confidence, urut kekuatan sinyal |
+| Multi-Timeframe | ✅ | Panel 15m·1H·4H·D di layar Detail; bias konfluensi + % keselarasan antar-timeframe |
+| Jurnal Trading | ✅ | "Ikuti ke Jurnal" dari kartu sinyal; TP/SL dievaluasi otomatis dari harga live, statistik win rate/expectancy/profit factor |
+| Backtest historis | ✅ | Walk-forward pada data historis; win rate, total R, expectancy, profit factor + riwayat 50 trade terakhir |
+| Toast in-app | ✅ | Notifikasi ringan untuk sinyal baru & TP/SL tersentuh (semua plan), notifikasi desktop tetap Premium |
+
+Semua fitur di atas berjalan penuh secara offline memakai engine analisa lokal (data demo/Yahoo) — tanpa layanan berbayar.
+
+## ⏳ Belum diimplementasikan (Fase 3)
 
 - Payment gateway Midtrans + License/Auth Server online (sekarang: validasi kode lisensi offline sebagai placeholder, format `TS-XXXX-XXXX-XXXX`).
-- Screener custom, multi-timeframe dalam satu layar, jurnal trading.
-- Backtesting, integrasi broker MT4/MT5, data IDX resmi realtime.
+- Integrasi broker MT4/MT5, data IDX resmi realtime.
 - Code signing Windows & notarization macOS.
 - Build macOS Intel (x86_64) — saat ini CI membuat build Apple Silicon.
 
@@ -83,8 +94,8 @@ Detail keputusan: [`docs/architecture-decisions/0001-data-layer-and-sidecar.md`]
 ```
 apps/desktop/            Tauri + React (frontend)
   src/components/        chart/ watchlist/ signal/ common/ layout/
-  src/screens/           Dashboard, Detail, Onboarding, Settings, Paywall
-  src/stores/            Zustand (watchlist, chart, user)
+  src/screens/           Dashboard, Detail, Screener, Journal, Backtest, Onboarding, Settings, Paywall
+  src/stores/            Zustand (watchlist, chart, user, journal, toast)
   src/services/          api.ts (REST), wsClient.ts (WebSocket)
   src-tauri/             Rust, tauri.conf.json (bundler nsis/dmg), icons
 services/sidecar/        FastAPI + analysis engine (+ tests)
@@ -100,6 +111,9 @@ ci/build-release.yml     workflow CI (pindahkan ke .github/workflows/)
 | GET | `/instruments` | daftar instrumen |
 | GET | `/instruments/{symbol}/history?timeframe=1h` | OHLCV + indikator + level S/R + sinyal |
 | GET | `/instruments/{symbol}/signal?timeframe=1h` | sinyal + level + ringkasan indikator |
+| GET | `/instruments/{symbol}/mtf` | analisa multi-timeframe (15m/1H/4H/D) + bias konfluensi |
+| GET | `/instruments/{symbol}/backtest?timeframe=1h` | backtest walk-forward + statistik + riwayat trade |
+| GET | `/screener?timeframe=1h&direction=any&asset_class=all&min_rr=2&min_confidence=0` | screener multi-instrumen |
 | GET | `/quotes?symbols=EURUSD,BBCA` | harga terakhir & % perubahan harian |
 | WS | `/stream/{symbol}?timeframe=1h` | tick candle terakhir tiap 5 dtk, sinyal/level saat berubah |
 

@@ -1,4 +1,5 @@
 import { ChartPanel } from '../components/chart/ChartPanel'
+import { MtfPanel } from '../components/chart/MtfPanel'
 import { useChartStore } from '../stores/useChartStore'
 import { useUserStore } from '../stores/useUserStore'
 import { fmtPrice, fmtTime } from '../services/format'
@@ -15,7 +16,10 @@ export function DetailScreen({ onRetry }: { onRetry: () => void }) {
 
   return (
     <div id="detail-screen" className="anim-screen flex min-h-0 flex-1 flex-col">
-      <div className="flex min-h-0 flex-1"><ChartPanel onRetry={onRetry} expanded /></div>
+      <div className="flex min-h-0 flex-1">
+        <ChartPanel onRetry={onRetry} expanded />
+        <MtfPanel />
+      </div>
       <section className="h-44 shrink-0 overflow-y-auto border-t border-border-subtle bg-bg-surface p-3">
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-txt-muted">Riwayat Sinyal · {symbol}</h3>
         {rows.length === 0 ? (

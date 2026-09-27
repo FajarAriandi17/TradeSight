@@ -1,5 +1,7 @@
 import { useChartStore } from '../../stores/useChartStore'
 import { useUserStore } from '../../stores/useUserStore'
+import { useJournalStore } from '../../stores/useJournalStore'
+import { toast } from '../../stores/useToastStore'
 import { fmtPrice, fmtTime } from '../../services/format'
 import { LoadingSkeleton } from '../common/LoadingSkeleton'
 import { IndicatorToggle } from '../chart/IndicatorToggle'
@@ -58,10 +60,18 @@ export function SignalCard() {
   const loadState = useChartStore((s) => s.loadState)
   const openPaywall = useUserStore((s) => s.openPaywall)
   const plan = useUserStore((s) => s.plan)
+  const follow = useJournalStore((s) => s.follow)
 
   const sig = analysis?.signal
   const prec = analysis?.instrument.precision ?? 2
   const state = !sig || sig.direction === 'none' ? 'no-signal' : sig.status
+
+  const onFollow = () => {
+    if (!analysis || !sig || sig.direction === 'none') return
+    if (plan === 'free') return openPaywall('Jurnal trading otomatis tersedia di Premium.')
+    const t = follow({ symbol: analysis.instrument.symbol, timeframe: analysis.timeframe, signal: sig })
+    if (t) toast({ kind: 'signal', title: `Diikuti: ${sig.direction.toUpperCase()} ${analysis.instrument.symbol}`, body: `Entry ${sig.entry} · dipantau di Jurnal` })
+  }
 
   return (
     <aside id="signal-panel" className="flex w-[280px] shrink-0 flex-col overflow-y-auto border-l border-border-subtle bg-bg-surface">
@@ -103,6 +113,12 @@ export function SignalCard() {
               </ul>
             </details>
             <p className="mt-2 text-[10px] text-txt-muted">Dihitung: {fmtTime(sig!.generated_at)}</p>
+            <button
+              onClick={onFollow}
+              className="mt-2 w-full rounded-btn border border-tp/50 bg-tp/10 py-1.5 text-xs font-semibold text-tp hover:bg-tp/20"
+            >
+              + Ikuti ke Jurnal {plan === 'free' && <span className="text-[10px] text-yellow-400">PREMIUM</span>}
+            </button>
           </div>
         )}
         {sig && (

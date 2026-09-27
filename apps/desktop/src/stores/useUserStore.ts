@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export type Plan = 'free' | 'premium'
-export type Screen = 'dashboard' | 'settings' | 'detail'
+export type Screen = 'dashboard' | 'settings' | 'detail' | 'screener' | 'journal' | 'backtest'
 
 interface UserState {
   onboarded: boolean
