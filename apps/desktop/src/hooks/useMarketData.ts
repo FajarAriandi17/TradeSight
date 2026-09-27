@@ -5,6 +5,8 @@ import { notify } from '../services/notify'
 import { useChartStore } from '../stores/useChartStore'
 import { useWatchlistStore } from '../stores/useWatchlistStore'
 import { useUserStore } from '../stores/useUserStore'
+import { useJournalStore } from '../stores/useJournalStore'
+import { toast } from '../stores/useToastStore'
 
 /** Memuat historis (REST) + subscribe WebSocket untuk instrumen aktif; polling quote watchlist. */
 export function useMarketData() {
@@ -42,13 +44,30 @@ export function useMarketData() {
         st.applyTick(msg.candle, msg.summary, msg.source, msg.signal, msg.levels)
         useWatchlistStore.getState().updatePrice(msg.symbol, msg.candle.close)
 
+        // evaluasi jurnal: tutup trade yang menyentuh TP/SL (semua plan)
+        const closed = useJournalStore.getState().evaluate(msg.symbol, msg.candle.close)
+        closed.forEach((t) =>
+          toast({
+            kind: t.status === 'win' ? 'tp' : 'sl',
+            title: `Jurnal ${msg.symbol}: ${t.status === 'win' ? 'Take Profit ✓' : 'Stop Loss ✕'}`,
+            body: `${t.r_multiple >= 0 ? '+' : ''}${t.r_multiple}R · exit ${t.exitPrice}`,
+          }),
+        )
+
         // notifikasi: sinyal baru / level TP-SL tersentuh (premium)
         const user = useUserStore.getState()
         const premium = user.plan === 'premium' && user.notifications
         if (msg.signal && msg.signal.direction !== 'none') {
           st.logSignal({ symbol: msg.symbol, timeframe: msg.timeframe, signal: msg.signal })
-          if (premium && msg.signal.entry !== prevSig.entry)
-            notify(`Setup ${msg.signal.direction.toUpperCase()} ${msg.symbol}`, `Entry ${msg.signal.entry} · TP ${msg.signal.take_profit} · SL ${msg.signal.stop_loss}`)
+          if (msg.signal.entry !== prevSig.entry) {
+            toast({
+              kind: 'signal',
+              title: `Setup ${msg.signal.direction.toUpperCase()} ${msg.symbol}`,
+              body: `Entry ${msg.signal.entry} · TP ${msg.signal.take_profit} · SL ${msg.signal.stop_loss}`,
+            })
+            if (premium)
+              notify(`Setup ${msg.signal.direction.toUpperCase()} ${msg.symbol}`, `Entry ${msg.signal.entry} · TP ${msg.signal.take_profit} · SL ${msg.signal.stop_loss}`)
+          }
         }
         if (premium && prevSig.direction !== 'none' && prevSig.take_profit && prevSig.stop_loss) {
           const p = msg.candle.close

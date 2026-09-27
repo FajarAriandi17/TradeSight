@@ -1,4 +1,4 @@
-import type { Analysis, Instrument, Quote, Timeframe } from './types'
+import type { Analysis, BacktestResult, Instrument, MtfResult, Quote, ScreenerFilters, ScreenerRow, Timeframe } from './types'
 
 /** Alamat sidecar lokal. Dapat dioverride lewat VITE_SIDECAR_URL (mis. saat dev di browser). */
 export const SIDECAR_URL: string =
@@ -21,6 +21,15 @@ export const api = {
   history: (symbol: string, timeframe: Timeframe, signal?: AbortSignal) =>
     get<Analysis>(`/instruments/${symbol}/history?timeframe=${timeframe}`, signal),
   quotes: (symbols: string[]) => get<Quote[]>(`/quotes?symbols=${symbols.join(',')}`),
+  mtf: (symbol: string, signal?: AbortSignal) => get<MtfResult>(`/instruments/${symbol}/mtf`, signal),
+  backtest: (symbol: string, timeframe: Timeframe, signal?: AbortSignal) =>
+    get<BacktestResult>(`/instruments/${symbol}/backtest?timeframe=${timeframe}`, signal),
+  screener: (f: ScreenerFilters, signal?: AbortSignal) =>
+    get<ScreenerRow[]>(
+      `/screener?timeframe=${f.timeframe}&direction=${f.direction}&asset_class=${f.asset_class}` +
+        `&min_rr=${f.min_rr}&min_confidence=${f.min_confidence}`,
+      signal,
+    ),
 }
 
 /** Tunggu sidecar siap (dipakai saat app baru dibuka, sidecar butuh waktu start). */

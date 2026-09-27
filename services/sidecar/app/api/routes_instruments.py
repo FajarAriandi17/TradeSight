@@ -4,7 +4,8 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.concurrency import run_in_threadpool
 
 from app.data.instruments import INSTRUMENTS, get_instrument
-from app.engine.analysis import analyze, quote
+from app.engine.analysis import analyze, multi_timeframe, quote, screen
+from app.engine.backtest import backtest
 
 router = APIRouter()
 TIMEFRAMES = {"15m", "1h", "4h", "1d"}
@@ -38,6 +39,52 @@ async def signal(symbol: str, timeframe: str = Query("1h")):
     sym = _check(symbol, timeframe)
     res = await run_in_threadpool(analyze, sym, timeframe)
     return {"signal": res.signal, "levels": res.levels, "summary": res.summary}
+
+
+@router.get("/instruments/{symbol}/mtf")
+async def mtf(symbol: str):
+    """Analisa multi-timeframe (15m/1h/4h/1d) + bias konfluensi (Fase 2)."""
+    sym = _check(symbol)
+    return await run_in_threadpool(multi_timeframe, sym)
+
+
+@router.get("/instruments/{symbol}/backtest")
+async def backtest_route(symbol: str, timeframe: str = Query("1h")):
+    """Walk-forward backtest strategi sinyal atas data historis (Fase 2/3)."""
+    sym = _check(symbol, timeframe)
+    try:
+        return await run_in_threadpool(backtest, sym, timeframe)
+    except RuntimeError as e:
+        raise HTTPException(503, str(e))
+
+
+@router.get("/screener")
+async def screener(
+    timeframe: str = Query("1h"),
+    direction: str = Query("all", description="all|buy|sell|any (any = ada setup)"),
+    asset_class: str = Query("all", description="all|forex|idx"),
+    min_rr: float = Query(0.0),
+    min_confidence: float = Query(0.0),
+):
+    """Screener seluruh instrumen dengan filter arah/kelas aset/RR/confidence (Fase 2)."""
+    if timeframe not in TIMEFRAMES:
+        raise HTTPException(400, f"Timeframe harus salah satu dari {sorted(TIMEFRAMES)}")
+    rows = await run_in_threadpool(screen, timeframe)
+    out = []
+    for r in rows:
+        if asset_class != "all" and r.instrument.asset_class != asset_class:
+            continue
+        if direction in ("buy", "sell") and r.direction != direction:
+            continue
+        if direction == "any" and r.direction == "none":
+            continue
+        if r.confidence < min_confidence:
+            continue
+        if min_rr and (r.risk_reward is None or r.risk_reward < min_rr):
+            continue
+        out.append(r)
+    out.sort(key=lambda r: (r.direction == "none", -r.confidence))
+    return out
 
 
 @router.get("/quotes")

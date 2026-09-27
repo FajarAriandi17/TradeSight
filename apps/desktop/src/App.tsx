@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { AppShell } from './components/layout/AppShell'
 import { DashboardScreen } from './screens/DashboardScreen'
 import { DetailScreen } from './screens/DetailScreen'
+import { ScreenerScreen } from './screens/ScreenerScreen'
+import { JournalScreen } from './screens/JournalScreen'
+import { BacktestScreen } from './screens/BacktestScreen'
 import { OnboardingScreen } from './screens/OnboardingScreen'
 import { PaywallScreen } from './screens/PaywallScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
@@ -18,6 +21,9 @@ function Main() {
     <AppShell>
       {screen === 'dashboard' && <DashboardScreen onRetry={reload} />}
       {screen === 'detail' && <DetailScreen onRetry={reload} />}
+      {screen === 'screener' && <ScreenerScreen />}
+      {screen === 'journal' && <JournalScreen />}
+      {screen === 'backtest' && <BacktestScreen />}
       {screen === 'settings' && <SettingsScreen />}
       <PaywallScreen />
     </AppShell>

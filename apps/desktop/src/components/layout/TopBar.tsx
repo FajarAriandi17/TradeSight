@@ -1,7 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useChartStore } from '../../stores/useChartStore'
-import { useUserStore } from '../../stores/useUserStore'
+import { useUserStore, type Screen } from '../../stores/useUserStore'
 import { useWatchlistStore } from '../../stores/useWatchlistStore'
+
+const NAV: { id: Screen; label: string }[] = [
+  { id: 'screener', label: 'Screener' },
+  { id: 'journal', label: 'Jurnal' },
+  { id: 'backtest', label: 'Backtest' },
+]
 
 export function TopBar() {
   const { instruments, setSymbol, conn, source } = useChartStore()
@@ -54,6 +60,20 @@ export function TopBar() {
       </div>
 
       <div className="ml-auto flex items-center gap-4">
+        <nav className="flex items-center gap-1">
+          {NAV.map((n) => (
+            <button
+              key={n.id}
+              onClick={() => setScreen(screen === n.id ? 'dashboard' : n.id)}
+              className={`rounded-btn px-2.5 py-1 text-xs transition-colors ${
+                screen === n.id ? 'bg-bg-elevated text-txt-primary' : 'text-txt-muted hover:text-txt-primary'
+              }`}
+            >
+              {n.label}
+              {plan === 'free' && <span className="ml-1 text-[9px] text-yellow-400">✦</span>}
+            </button>
+          ))}
+        </nav>
         <div id="connection-status" className="flex items-center gap-2 text-xs text-txt-muted" title={`Sumber: ${source}`}>
           <span className={`h-2 w-2 rounded-full ${connColor} ${conn === 'live' ? 'animate-pulse' : ''}`} />
           {connText}

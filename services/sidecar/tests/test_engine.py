@@ -50,3 +50,39 @@ def test_api():
     with c.websocket_connect("/stream/EURUSD?timeframe=15m") as ws:
         msg = ws.receive_json()
         assert msg["type"] == "tick" and "signal" in msg
+
+
+def test_backtest_no_lookahead_and_rr():
+    from app.engine.backtest import run_backtest
+
+    rows = DemoProvider().history("EURUSD", "1h")
+    res = run_backtest(rows, "EURUSD", "1h", "demo-offline")
+    assert res.bars == len(rows)
+    assert res.trades == res.wins + res.losses
+    assert 0.0 <= res.win_rate <= 1.0
+    for t in res.trade_list:
+        # entri selalu di antara SL dan TP sesuai arah, dan trade tutup setelah dibuka
+        if t.direction == "buy":
+            assert t.stop_loss < t.entry < t.take_profit
+        else:
+            assert t.take_profit < t.entry < t.stop_loss
+        if t.closed_at is not None:
+            assert t.closed_at >= t.opened_at
+            assert t.outcome in ("win", "loss")
+
+
+def test_screener_and_mtf_endpoints():
+    c = TestClient(app)
+    rows = c.get("/screener?timeframe=1h&asset_class=forex").json()
+    assert isinstance(rows, list) and len(rows) == 5
+    assert all(row["instrument"]["asset_class"] == "forex" for row in rows)
+    buys = c.get("/screener?timeframe=1h&direction=buy").json()
+    assert all(row["direction"] == "buy" for row in buys)
+
+    mtf = c.get("/instruments/EURUSD/mtf").json()
+    assert mtf["bias"] in ("buy", "sell", "none")
+    assert {f["timeframe"] for f in mtf["frames"]} <= {"15m", "1h", "4h", "1d"}
+    assert 0.0 <= mtf["agreement"] <= 1.0
+
+    bt = c.get("/instruments/BBCA/backtest?timeframe=1h").json()
+    assert bt["trades"] == bt["wins"] + bt["losses"] and bt["disclaimer"]
