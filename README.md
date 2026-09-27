@@ -8,6 +8,15 @@ Aplikasi desktop **Windows (.exe)** & **macOS (.dmg)** yang menampilkan chart re
 
 ---
 
+## ⚙️ Aktifkan CI (sekali saja)
+
+File workflow disimpan di [`ci/build-release.yml`](ci/build-release.yml) karena integrasi GitHub App yang dipakai
+untuk push tidak punya izin `workflows`. Aktifkan dengan salah satu cara:
+
+- **Web GitHub:** buka `ci/build-release.yml` → salin isinya → **Add file → Create new file** → nama
+  `.github/workflows/build-release.yml` → paste → **Commit**.
+- **Lokal:** `mkdir -p .github/workflows && git mv ci/build-release.yml .github/workflows/ && git commit -m "ci: enable" && git push`
+
 ## ⬇️ Download installer
 
 Installer dibuat otomatis oleh GitHub Actions (tidak perlu komputer Windows/Mac fisik):
@@ -80,7 +89,7 @@ apps/desktop/            Tauri + React (frontend)
   src-tauri/             Rust, tauri.conf.json (bundler nsis/dmg), icons
 services/sidecar/        FastAPI + analysis engine (+ tests)
 scripts/build_sidecar.py PyInstaller → src-tauri/binaries/tradesight-sidecar-<triple>
-.github/workflows/       build-release.yml
+ci/build-release.yml     workflow CI (pindahkan ke .github/workflows/)
 ```
 
 ## 🔌 API sidecar (localhost:8765)
