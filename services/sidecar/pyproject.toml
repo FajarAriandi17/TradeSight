@@ -1,0 +1,9 @@
+[project]
+name = "tradesight-sidecar"
+version = "0.1.0"
+description = "TradeSight local analysis engine (FastAPI sidecar)"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
